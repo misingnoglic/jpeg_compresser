@@ -197,6 +197,11 @@ def dc_differences(L):
     """
     return [L[0]] + [L[i]-L[i-1] for i in range(1,len(L))]
 
+def undo_dc_differences(L):
+    for i in range(1,len(L)):
+        L[i] = L[i] + L[i-1]
+    return L
+
 def unzig_list(m: np.ndarray, L, unzig=None):
     """
     Restores the original shape of a block from the list of items
@@ -314,7 +319,7 @@ def matrix_to_zags(im, block_size, quality_factor):
             dc_coefficients.append(im[h][w])
 
             # add the zig zags from that block to the large list of them
-            zags.extend(zigzag(im[h: h+block_size, w:w+block_size], exclude_dc = False))
+            zags.extend(zigzag(im[h: h+block_size, w:w+block_size], exclude_dc=True))
     return im, dc_coefficients, zags
 
 
@@ -349,14 +354,19 @@ def compress_color(input_filename, output_filename, block_size, quality_factor, 
 
     # Step 2, perform DCT on each block of the image, collecting the zig zags of each block
     zags = []
+    dc_coefficients = []
     height, width = ims[0].shape
     for level in range(3):
         im, temp_dc_coefficients, temp_zags = matrix_to_zags(ims[level], block_size, quality_factor)
         ims[level] = im
         zags.extend(temp_zags)
+        dc_coefficients.extend(temp_dc_coefficients)
 
     if verbose:
         print(f"Performed DCT on each block of the image, and zig-zagged the blocks into a list")
+
+    dc_coefficients = dc_differences(dc_coefficients)
+    zags = dc_coefficients + zags
 
     if max(width,height)>(255*block_size)*256:
         raise ValueError("You need a bigger block size to compress this image")
@@ -435,6 +445,9 @@ def compress_bw(input_filename, output_filename, block_size, quality_factor, com
     height, width = im.shape
 
     im, dc_coefficients, zags = matrix_to_zags(im, block_size, quality_factor)
+    dc_coefficients = dc_differences(dc_coefficients)
+    zags = dc_coefficients + zags
+
 
     if verbose:
         print("Performed DCT on each block of the image, and zig-zagged the blocks into a list")
@@ -513,10 +526,14 @@ def view_jpg_file_bw(zags, height, width, quality_factor, start_time, block_size
     :return: 
     """
 
+    dc_coefficients = undo_dc_differences(zags[:(height*width)//(block_size**2)])
+    zags = zags[(height*width)//(block_size**2):]
+
     im = np.float32(np.zeros([height, width]))
     uz = unzigzag_matrix(block_size)
 
     current_index = 0
+    dc_index = 0
     square_size = block_size**2
 
     quant_matrix = gen_quant_matrix(block_size, quality_factor)
@@ -524,12 +541,13 @@ def view_jpg_file_bw(zags, height, width, quality_factor, start_time, block_size
     for h in range(0, height, block_size):
         for w in range(0, width, block_size):
             new_block = np.float32(np.zeros([block_size, block_size]))
-            new_block = unzig_list(new_block, zags[current_index:current_index + square_size], uz)
+            new_block = unzig_list(new_block, [dc_coefficients[dc_index]] + zags[current_index:current_index + square_size], uz)
             new_block = new_block * quant_matrix
             new_block = undo_dct(new_block)
 
             im[h: h+block_size, w:w+block_size] = new_block
-            current_index += block_size**2
+            current_index += (block_size**2 -1)
+            dc_index += 1
     if verbose:
         print("Restored each block by un-zigzagging, multiplying by the quantization matrix, and undoing the DCT")
 
@@ -555,11 +573,15 @@ def view_jpg_file_color(zags, height, width, quality_factor, start_time, block_s
     :param verbose: whether to print
     :return: 
     """
+    dc_end = 3*((height * width) // (block_size ** 2))
+    dc_coefficients = undo_dc_differences(zags[:dc_end])
+    zags = zags[dc_end:]
 
     im = np.float32(np.zeros([height, width, 3]))
     uz = unzigzag_matrix(block_size)
 
     current_index = 0
+    dc_index = 0
     square_size = block_size**2
 
     quant_matrix = gen_quant_matrix(block_size, quality_factor)
@@ -568,12 +590,13 @@ def view_jpg_file_color(zags, height, width, quality_factor, start_time, block_s
         for h in range(0, height, block_size):
             for w in range(0, width, block_size):
                 new_block = np.float32(np.zeros([block_size, block_size]))
-                new_block = unzig_list(new_block, zags[current_index:current_index + square_size], uz)
+                new_block = unzig_list(new_block, [dc_coefficients[dc_index]] + zags[current_index:current_index + square_size], uz)
                 new_block = new_block * quant_matrix
                 new_block = undo_dct(new_block)
 
                 im[h: h+block_size, w:w+block_size, level] = new_block
-                current_index += block_size**2
+                current_index += block_size**2 - 1
+                dc_index += 1
 
     if verbose:
         print("Restored each block by un-zigzagging, multiplying by the quantization matrix, and undoing the DCT")
@@ -779,4 +802,4 @@ def main():
 
 
 if __name__=="__main__":
-    main()
+    compress_all()
