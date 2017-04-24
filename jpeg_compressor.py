@@ -16,7 +16,7 @@ try:
     assert sys.version_info >= (3,6)
 except:
     print("Need to use Python 3.6")
-    raise
+    raise ValueError()
 
 
 def quantize(d: np.ndarray, q: np.ndarray):
@@ -219,7 +219,9 @@ def unzig_list(m: np.ndarray, L, unzig=None):
             try:
                 m[i][j] = L[unzig[i][j]]
             except IndexError:
-                import pdb;pdb.set_trace()
+                print("You must have passed some invalid length list to the method")
+                print(f"Should be length {max(unzig)}, yours is length {len(l)}.")
+                raise
     return m
 
 # Defining the various ways to compress/decompress
@@ -365,7 +367,7 @@ def compress_color(input_filename, output_filename, block_size, quality_factor, 
     if verbose:
         print(f"Performed DCT on each block of the image, and zig-zagged the blocks into a list")
 
-    dc_coefficients = dc_differences(dc_coefficients)
+    #dc_coefficients = dc_differences(dc_coefficients)
     zags = dc_coefficients + zags
 
     if max(width,height)>(255*block_size)*256:
@@ -445,7 +447,9 @@ def compress_bw(input_filename, output_filename, block_size, quality_factor, com
     height, width = im.shape
 
     im, dc_coefficients, zags = matrix_to_zags(im, block_size, quality_factor)
-    dc_coefficients = dc_differences(dc_coefficients)
+    #dc_coefficients = dc_differences(dc_coefficients)
+    dc_coefficients = [x for x in dc_coefficients]
+
     zags = dc_coefficients + zags
 
 
@@ -526,7 +530,7 @@ def view_jpg_file_bw(zags, height, width, quality_factor, start_time, block_size
     :return: 
     """
 
-    dc_coefficients = undo_dc_differences(zags[:(height*width)//(block_size**2)])
+    dc_coefficients = zags[:(height*width)//(block_size**2)]
     zags = zags[(height*width)//(block_size**2):]
 
     im = np.float32(np.zeros([height, width]))
@@ -574,7 +578,8 @@ def view_jpg_file_color(zags, height, width, quality_factor, start_time, block_s
     :return: 
     """
     dc_end = 3*((height * width) // (block_size ** 2))
-    dc_coefficients = undo_dc_differences(zags[:dc_end])
+    dc_coefficients = zags[:dc_end]
+    #dc_coefficients = undo_dc_differences(zags[:dc_end])
     zags = zags[dc_end:]
 
     im = np.float32(np.zeros([height, width, 3]))
@@ -750,7 +755,6 @@ def main():
     """
     Main Method: Generates the command line arguments, and handles the interractive version, as well
     as designates 
-    :return: 
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--verbose", help="Prints Messages", action="store_true")
@@ -802,4 +806,4 @@ def main():
 
 
 if __name__=="__main__":
-    compress_all()
+    main()
