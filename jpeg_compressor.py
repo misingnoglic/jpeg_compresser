@@ -13,10 +13,9 @@ from PIL import Image
 
 # Code to make sure py3.6 is used
 try:
-    assert sys.version_info >= (3,6)
+    assert sys.version_info >= (3, 6)
 except:
-    print("Need to use Python 3.6")
-    raise ValueError()
+    raise ValueError("Need to use Python 3.6")
 
 
 def quantize(d: np.ndarray, q: np.ndarray):
@@ -30,6 +29,7 @@ def quantize(d: np.ndarray, q: np.ndarray):
     # Rounds each number to nearest number, and then converts to int
     return np.int32(np.matrix.round(d/q))
 
+
 def dct_transform(a: np.ndarray):
     """
     Given a matrix, does a DCT transform on the matrix
@@ -39,6 +39,7 @@ def dct_transform(a: np.ndarray):
     size = a.shape[0]
     d = gen_dct_matrix(size) # Generate the DCT matrix
     return np.float64(d @ a @ d.T)
+
 
 def undo_dct(a: np.ndarray):
     """
@@ -114,7 +115,7 @@ def gen_quant_matrix(size: int = 8, Q=50):
     quant_matrix_small = np.int32(int_mat)
     if size == 8: # Possibly this if statement isn't needed, but it works
         m = quant_matrix_small
-    else: # size is 16
+    else:  # size is 16
         quant_matrix = np.zeros([size,size])
         for i in range(0,size,8): # For each block of 8, copy the small matrix into it
             for j in range(0,size,8):
@@ -123,12 +124,13 @@ def gen_quant_matrix(size: int = 8, Q=50):
 
     # Changing quality factor of matrix
     # from http://stackoverflow.com/questions/29215879/how-can-i-generalize-the-quantization-matrix-in-jpeg-compression
-    if (Q < 50):
-        S = 5000 / Q
+    if Q < 50:
+        s = 5000 / Q
     else:
-        S = 200 - 2 * Q
+        s = 200 - 2 * Q
 
-    return np.int32((S * m + 50) / 100)
+    return np.int32((s * m + 50) / 100)
+
 
 def zigzag(m: np.int32, odd=True, exclude_dc=False):
     """
@@ -151,18 +153,19 @@ def zigzag(m: np.int32, odd=True, exclude_dc=False):
         else:
             bound = i-n+1
         for j in range(bound, i-bound+1):
-            if (i%2==1)==odd: # if odd is true,
+            if (i % 2 == 1) == odd:  # if odd is true,
                 z.append(m[j][i-j])
             else:
                 z.append(m[i-j][j])
     return z
 
+
 def unzigzag_matrix(size, odd=True, exclude_dc=False):
     """
-    precomputing the anti-zig-zag algorithm
-    size: 8 or 16
-    odd: Odd or even traversal
-    exclude_dc - whether the DC component is excluded
+    precomputing the un-zig-zag matrix
+    :param size: 8 or 16
+    :param odd: Odd or even traversal
+    :param exclude_dc - whether the DC component is excluded
     """
     m = np.int32(np.zeros([size,size]))
     n = size
@@ -172,15 +175,14 @@ def unzigzag_matrix(size, odd=True, exclude_dc=False):
         start = 1
 
     for i in range(start,2*(n-1)+1):
-
-        if (i<n):
+        if i < n:
             bound = 0
         else:
             bound = i-n+1
         for j in range(bound, i-bound+1):
             index += 1
-            if (i%2==1)==odd: # if odd is true,
-                #z.append(m[j][i-j])
+            # Store the index of the list in the correct part of the matric
+            if (i % 2 == 1) == odd:
                 m[j][i-j] = index
             else:
                 m[i-j][j] = index
@@ -191,16 +193,23 @@ def dc_differences(L):
     """
     Given a list, gives back a list of the first one, plus all the differences  
     L[i]-L[i-1] for each 0<i<len(L) - done because these DC coefficients are
-    very highly correlated
+    very highly correlated. Unused in my implementation.
     :param L: List of dc coefficients
     :return: Differences of coefficients
     """
     return [L[0]] + [L[i]-L[i-1] for i in range(1,len(L))]
 
+
 def undo_dc_differences(L):
+    """
+    Undoing the differences done in dc_differences. Unsed in this implementation
+    :param L: Differences of coefficients
+    :return: List of dc coefficients
+    """
     for i in range(1,len(L)):
         L[i] = L[i] + L[i-1]
     return L
+
 
 def unzig_list(m: np.ndarray, L, unzig=None):
     """
@@ -220,7 +229,7 @@ def unzig_list(m: np.ndarray, L, unzig=None):
                 m[i][j] = L[unzig[i][j]]
             except IndexError:
                 print("You must have passed some invalid length list to the method")
-                print(f"Should be length {max(unzig)}, yours is length {len(l)}.")
+                print(f"Should be length {max(unzig)}, yours is length {len(L)}.")
                 raise
     return m
 
@@ -232,19 +241,23 @@ def unzig_list(m: np.ndarray, L, unzig=None):
 # The compress functions all take a list of bytes, and a filename to store them
 # The decompress functions all take the filename, and return the list of bytes
 
-def gzip_compress(bytes, filename):
+
+def gzip_compress(list_of_bytes, filename):
     with gzip.open(filename, 'wb') as f:
-        f.write(bytes)
+        f.write(list_of_bytes)
+
 
 def gzip_uncompress(filename):
     with gzip.open(filename, 'rb') as f:
         zags = list(f.read())
     return zags
 
-def zlib_compress(bytes, filename):
+
+def zlib_compress(list_of_bytes, filename):
     with open(filename, 'wb') as f:
-        z = zlib.compress(bytes)
+        z = zlib.compress(list_of_bytes)
         f.write(z)
+
 
 def zlib_uncompress(filename):
     with open(filename, 'rb') as f:
@@ -252,10 +265,12 @@ def zlib_uncompress(filename):
         z = zlib.decompress(r)
     return z
 
-def bzip_compress(bytes, filename):
+
+def bzip_compress(list_of_bytes, filename):
     with open(filename, 'wb') as f:
-        z = bz2.compress(bytes)
+        z = bz2.compress(list_of_bytes)
         f.write(z)
+
 
 def bzip_uncompress(filename):
     with open(filename, 'rb') as f:
@@ -284,7 +299,9 @@ def encode_length(n, block_size):
     """
 
     high_byte_value = block_size * 255
-    return (n//high_byte_value, (n%high_byte_value)//block_size)
+    # Return tuple of high byte, low byte
+    return n//high_byte_value, (n%high_byte_value)//block_size
+
 
 def decode_length(high, low, block_size):
     """
@@ -294,7 +311,8 @@ def decode_length(high, low, block_size):
     :param block_size: the block size
     :return: the actual length
     """
-    return (high * (block_size * 255)) + low * (block_size)
+    return (high * (block_size * 255)) + low * block_size
+
 
 def matrix_to_zags(im, block_size, quality_factor):
     """
@@ -367,7 +385,7 @@ def compress_color(input_filename, output_filename, block_size, quality_factor, 
     if verbose:
         print(f"Performed DCT on each block of the image, and zig-zagged the blocks into a list")
 
-    #dc_coefficients = dc_differences(dc_coefficients)
+    # dc_coefficients = dc_differences(dc_coefficients)
     zags = dc_coefficients + zags
 
     if max(width,height)>(255*block_size)*256:
@@ -400,11 +418,11 @@ def compress_color(input_filename, output_filename, block_size, quality_factor, 
     if verbose or True:
         print(f"Compressed {input_filename} to {output_filename} using lossless compression method {compression_method}")
         print(f"Block size {block_size} and quality factor {quality_factor}")
-        #print(f"Took {round(time.time() - start_time, 2)} seconds")
+        print(f"Took {round(time.time() - start_time, 2)} seconds")
         old_size = os.stat(input_filename).st_size
         new_size = os.stat(output_filename).st_size
-        #print(f"Original file size: {old_size} bytes")
-        #print(f"New file size: {new_size} bytes")
+        print(f"Original file size: {old_size} bytes")
+        print(f"New file size: {new_size} bytes")
         print(f"Compression Ratio: {round(old_size/new_size, 3)}")
 
     return round(old_size / new_size, 3)
@@ -433,7 +451,7 @@ def compress_bw(input_filename, output_filename, block_size, quality_factor, com
     # Step 0 - crop image in bottom right
     old_shape = im.shape
     im = crop(im, block_size)
-    if verbose and not im.shape==old_shape:
+    if verbose and not im.shape == old_shape:
         print(f"Cropped image from {old_shape[0]}x{old_shape[1]} to {im.shape[0]}x{im.shape[1]} to "
               f"fit the block size {block_size}")
 
@@ -442,22 +460,21 @@ def compress_bw(input_filename, output_filename, block_size, quality_factor, com
     if verbose:
         print("Leveled each block by subtracting 128")
 
-
     # Step 2, perform DCT on each block of the image, collecting the zig zags of each block
     height, width = im.shape
 
     im, dc_coefficients, zags = matrix_to_zags(im, block_size, quality_factor)
-    #dc_coefficients = dc_differences(dc_coefficients)
+    # dc_coefficients = dc_differences(dc_coefficients)
     dc_coefficients = [x for x in dc_coefficients]
 
     zags = dc_coefficients + zags
 
-
     if verbose:
         print("Performed DCT on each block of the image, and zig-zagged the blocks into a list")
 
-    if max(width,height)>(255*block_size)*256:
-        raise ValueError("You need a bigger block size to compress this image")
+    if max(width,height) > (255*block_size)*256:
+        raise ValueError("You need a bigger block size to compress this image, because"
+                         " of how we're encoding the height and width.")
 
     # Encoding the height and width
     height_high, height_low = encode_length(height, block_size)
@@ -479,6 +496,7 @@ def compress_bw(input_filename, output_filename, block_size, quality_factor, com
     # Get the right compression function
     compression_function = compression_map[compression_method][0]
 
+    # call it on the bytes
     compression_function(b, output_filename)
 
     old_size = os.stat(input_filename).st_size
@@ -487,12 +505,13 @@ def compress_bw(input_filename, output_filename, block_size, quality_factor, com
     if verbose or True:
         print(f"Compressed {input_filename} to {output_filename} using lossless compression method {compression_method}")
         print(f"Block size {block_size} and quality factor {quality_factor}")
-        #print(f"Took {round(time.time() - start_time, 2)} seconds")
-        #print(f"Original file size: {old_size} bytes")
-        #print(f"New file size: {new_size} bytes")
+        print(f"Took {round(time.time() - start_time, 2)} seconds")
+        print(f"Original file size: {old_size} bytes")
+        print(f"New file size: {new_size} bytes")
         print(f"Compression Ratio: {round(old_size/new_size, 3)}")
 
     return round(old_size/new_size, 3)
+
 
 def compress(input_filename, output_filename, block_size, quality_factor, compression_method, verbose):
     """
@@ -508,10 +527,12 @@ def compress(input_filename, output_filename, block_size, quality_factor, compre
 
     x = np.int32(Image.open(input_filename))
     if len(x.shape) > 2: # If the matrix has 3 dimensions, then it's a color image
-        if verbose: print("Image is color image. ")
+        if verbose:
+            print("Image is color image. ")
         ratio = compress_color(input_filename, output_filename, block_size, quality_factor, compression_method, verbose)
     else:
-        if verbose: print("Image is greyscale image. ")
+        if verbose:
+            print("Image is greyscale image. ")
         ratio = compress_bw(input_filename, output_filename, block_size, quality_factor, compression_method, verbose)
     return ratio
 
@@ -527,7 +548,6 @@ def view_jpg_file_bw(zags, height, width, quality_factor, start_time, block_size
     :param start_time: time it took to start the viewing
     :param block_size: block size used
     :param verbose: whether to print
-    :return: 
     """
 
     dc_coefficients = zags[:(height*width)//(block_size**2)]
@@ -575,7 +595,6 @@ def view_jpg_file_color(zags, height, width, quality_factor, start_time, block_s
     :param start_time: time it took to start the viewing
     :param block_size: block size used
     :param verbose: whether to print
-    :return: 
     """
     dc_end = 3*((height * width) // (block_size ** 2))
     dc_coefficients = zags[:dc_end]
@@ -608,8 +627,8 @@ def view_jpg_file_color(zags, height, width, quality_factor, start_time, block_s
 
     # Saturate
     im = np.matrix.round(im +128)
-    im[im<0] = 0
-    im[im>255] = 255
+    im[im < 0] = 0
+    im[im > 255] = 255
     im = np.uint8(im)
 
     if verbose:
@@ -620,6 +639,7 @@ def view_jpg_file_color(zags, height, width, quality_factor, start_time, block_s
         print("Displaying Image (check your task bar)")
         print(f"Time taken: {round(time.time()-start_time, 2)} seconds")
     pillow_image.show()
+
 
 def view_jpg_file(filename, compression_method, verbose):
     """
@@ -647,7 +667,6 @@ def view_jpg_file(filename, compression_method, verbose):
     quality_factor = zags.pop()
 
     # Unpacking the width and height of the image
-    high_byte_value = block_size * 255
     height_high = zags.pop()
     height_low = zags.pop()
 
@@ -666,6 +685,7 @@ def view_jpg_file(filename, compression_method, verbose):
 
 # Functions made for testing:
 
+
 def checkerboard(height: int, width: int):
     """
     Creates the checkerboard example from the slides, but can be
@@ -680,6 +700,7 @@ def checkerboard(height: int, width: int):
     im = np.float32(x)
     return im
 
+
 def color_checkerboard(height: int, width: int):
     """
     Color checkerboard (similar to the b&w one from above)    
@@ -688,6 +709,7 @@ def color_checkerboard(height: int, width: int):
     x += [list(reversed(p)) for p in x]
     im = np.float32(x)
     return im
+
 
 def zig_zag_example():
     """
@@ -701,6 +723,7 @@ def zig_zag_example():
         s[i//8][i%8] = i
 
     return np.int32(s)
+
 
 def zig_zag_test():
     """
@@ -717,9 +740,11 @@ def zig_zag_test():
     r = unzig_list(im, p, uz)
     print(r)
 
+
 def compress_all():
     """
-    Compresses all of the bmp files in your folder, and creates a CSV report with all the data
+    Compresses all of the bmp files in your folder, and creates a CSV report with all the data.
+    Made to create the table of data in the PDF report. 
     """
     import glob
     bmps = glob.glob("*.bmp")
@@ -751,10 +776,11 @@ def compress_all():
                     #input()
             chart.writerow(L)
 
+
 def main():
     """
-    Main Method: Generates the command line arguments, and handles the interractive version, as well
-    as designates 
+    Main Method: Generates the command line arguments, and handles the interactive version, as well
+    as designates which methods be called
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--verbose", help="Prints Messages", action="store_true")
