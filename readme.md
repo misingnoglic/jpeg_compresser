@@ -12,7 +12,7 @@ The program, jpeg_compressor.py, is a python program that runs with command line
 
 If your action is "compress" or “both,” you need to have these options:
 
-  --originalfile ORIGINALFILE
+`  --originalfile ORIGINALFILE
 
                         Filename for compressed file(either for storing the
 
@@ -34,21 +34,21 @@ If your action is "compress" or “both,” you need to have these options:
 
   --compressionmethod {gzip,zlib,bzip,xz}
 
-                        Compression Method
+                        Compression Method`
 
 If your action is decompress, you only need to supply the "compressedfile" and “compressionmethod” arguments. For all actions, you can also supply this argument.
 
-  --verbose             Prints Messages
+`  --verbose             Prints Messages`
 
 If you want the program to annotate what it’s doing, plus tell you the compression ratios. For example:
 
-python jpeg_compressor.py --action both --verbose --originalfile Kodak12gray.bmp --compressedfile file.gz --blocksize 8 --qualityfactor 50 --compressionmethod gzip
+`python jpeg_compressor.py --action both --verbose --originalfile Kodak12gray.bmp --compressedfile file.gz --blocksize 8 --qualityfactor 50 --compressionmethod gzip`
 
 This command will first compress "Kodak12gray.bmp" into file.gz, with a blocksize of 8, quality factor of 50, and compress with gzip. It will then uncompress file.gz with gzip, and display the image. Because --verbose is turned on, the program will also print out what it’s doing.
 
 An example of a decompress call to the above image:
 
-python jpeg_compressor.py --action decompress --verbose --compressedfile file.gz --compressionmethod gzip
+`python jpeg_compressor.py --action decompress --verbose --compressedfile file.gz --compressionmethod gzip`
 
 Notice how for the decompression, you just have to specify the filename and the compression method, since information like the block size is encoded in the image.
 
@@ -77,8 +77,8 @@ To compress, the program first reads in the image as a numpy matrix, and then de
 5. Add the DC components in front of the zig_zag list
 
 6. Encode the height and width of the image into two bytes, using the formula:
-high_byte = n/(block_size * 255)
-low_byte = (n%(block_size * 255))/block_size
+`high_byte = n/(block_size * 255)
+low_byte = (n%(block_size * 255))/block_size`
 
 7. Add the width, height,quality factor, and block size to the zig zag list, so that it is encoded into the image (so the user doesn’t have to know these things).
 
@@ -134,7 +134,7 @@ Some things I wish I did better:
 
 # Example run:
 
->python jpeg_compressor.py --action both --verbose --originalfile Kodak12.bmp --compressedfile file.gz --blocksize 8 --qualityfactor 50 --compressionmethod gzip
+``>python jpeg_compressor.py --action both --verbose --originalfile Kodak12.bmp --compressedfile file.gz --blocksize 8 --qualityfactor 50 --compressionmethod gzip
 
 Starting program with these arguments:
 
@@ -172,7 +172,7 @@ Re-leveled image by adding 128 to each pixel
 
 Displaying Image (check your task bar)
 
-Time taken: 3.76 seconds
+Time taken: 3.76 seconds`
 
 # Tables
 
