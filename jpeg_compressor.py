@@ -654,7 +654,7 @@ def view_jpg_file(filename, compression_method, verbose):
 
     # Get the right decompression function
     decompression_function = compression_map[compression_method][1]
-    zags = decompression_function(file_name)
+    zags = list(decompression_function(file_name))
 
     if verbose:
         print(f"Decompressed {filename} using lossless decompression method {compression_method}")
@@ -772,7 +772,7 @@ def compress_all():
                     ratio = compress(bmp, new, block_size,
                              quality, compression_type, False)
                     L.append(ratio)
-                    #view_jpg_file(new, compression_type, False)
+                    view_jpg_file(new, compression_type, False)
                     #input()
             chart.writerow(L)
 
@@ -790,7 +790,7 @@ def main():
                         help="Filename for compressed file(either for storing the compressed file or reading it. ")
     parser.add_argument("--compressedfile",
                         help="Filename for compressed file(either for storing the compressed file or reading it. ")
-    parser.add_argument("--blocksize", type=int, help="Block size for image (for compression)")
+    parser.add_argument("--blocksize", type=int, help="Block size for image (for compression)", choices=[8,16])
     parser.add_argument("--qualityfactor", type=int, help="Quality Factor (generally 30,40, 50)")
     parser.add_argument("--compressionmethod", help="Compression Method", choices=["gzip", "zlib", "bzip"])
 
