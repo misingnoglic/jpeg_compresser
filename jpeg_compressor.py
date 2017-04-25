@@ -378,7 +378,7 @@ def compress_color(input_filename, output_filename, block_size, quality_factor, 
     old_shape = ims[0].shape
     ims = [crop(im, block_size) for im in ims]
     if verbose and not ims[0].shape==old_shape:
-        print(f"Cropped image from {old_shape[0]}x{old_shape[1]} to {im.shape[0]}x{im.shape[1]} to "
+        print(f"Cropped image from {old_shape[0]}x{old_shape[1]} to {ims[0].shape[0]}x{ims[0].shape[1]} to "
               f"fit the block size {block_size}")
 
     # Step 1, subtract 128 from each block in the matrix:
