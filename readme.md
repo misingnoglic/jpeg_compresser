@@ -12,7 +12,8 @@ The program, jpeg_compressor.py, is a python program that runs with command line
 
 If your action is "compress" or “both,” you need to have these options:
 
-`  --originalfile ORIGINALFILE
+`
+  --originalfile ORIGINALFILE
 
                         Filename for compressed file(either for storing the
 
@@ -34,7 +35,8 @@ If your action is "compress" or “both,” you need to have these options:
 
   --compressionmethod {gzip,zlib,bzip,xz}
 
-                        Compression Method`
+                        Compression Method
+`
 
 If your action is decompress, you only need to supply the "compressedfile" and “compressionmethod” arguments. For all actions, you can also supply this argument.
 
