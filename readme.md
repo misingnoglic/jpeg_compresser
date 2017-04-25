@@ -1,7 +1,3 @@
-Arya Boudaie
-
-COSI 175A
-
 # Jpeg Project Description
 
 This is the description of my program - how to use it and how it works. Keep in mind that it works on both color and grayscale bitmaps. To use it, you need to install the numpy and Pillow libraries, and you need to run it on Python 3.6.
