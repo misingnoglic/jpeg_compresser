@@ -8,6 +8,7 @@ import argparse
 import time
 import os
 import csv
+import lzma
 
 from PIL import Image
 
@@ -278,11 +279,24 @@ def bzip_uncompress(filename):
         z = bz2.decompress(r)
     return z
 
+def xz_compress(list_of_bytes, filename):
+    with open(filename, 'wb') as f:
+        z = lzma.compress(list_of_bytes)
+        f.write(z)
+
+def xz_uncompress(filename):
+    with open(filename, 'rb') as f:
+        r = f.read()
+        z = lzma.decompress(r)
+    return z
+
+
 
 # Map of compression type to the compression and decompression methods
 compression_map = {"gzip": (gzip_compress, gzip_uncompress),
                    "zlib": (zlib_compress, zlib_uncompress),
-                   "bzip": (bzip_compress, bzip_uncompress)}
+                   "bzip": (bzip_compress, bzip_uncompress),
+                   "xz": (xz_compress, xz_uncompress)}
 
 # Key for encoding the compression type - unused
 compression_key = {1: "gzip", 2: "zlib", 3: "bzip"}
@@ -415,7 +429,7 @@ def compress_color(input_filename, output_filename, block_size, quality_factor, 
     old_size = os.stat(input_filename).st_size
     new_size = os.stat(output_filename).st_size
 
-    if verbose or True:
+    if verbose:
         print(f"Compressed {input_filename} to {output_filename} using lossless compression method {compression_method}")
         print(f"Block size {block_size} and quality factor {quality_factor}")
         print(f"Took {round(time.time() - start_time, 2)} seconds")
@@ -502,7 +516,7 @@ def compress_bw(input_filename, output_filename, block_size, quality_factor, com
     old_size = os.stat(input_filename).st_size
     new_size = os.stat(output_filename).st_size
 
-    if verbose or True:
+    if verbose:
         print(f"Compressed {input_filename} to {output_filename} using lossless compression method {compression_method}")
         print(f"Block size {block_size} and quality factor {quality_factor}")
         print(f"Took {round(time.time() - start_time, 2)} seconds")
@@ -766,13 +780,13 @@ def compress_all():
             new_size = os.stat("test.jpg").st_size
             L.append(round(old_size/new_size, 3))
 
-            for compression_type in ["gzip", "bzip", "zlib"]:
+            for compression_type in ["gzip", "bzip", "zlib", "xz"]:
                 for block_size in [8,16]:
                     new = bmp.replace("bmp", compression_type)
                     ratio = compress(bmp, new, block_size,
                              quality, compression_type, False)
                     L.append(ratio)
-                    view_jpg_file(new, compression_type, False)
+                    #view_jpg_file(new, compression_type, False)
                     #input()
             chart.writerow(L)
 
@@ -792,7 +806,7 @@ def main():
                         help="Filename for compressed file(either for storing the compressed file or reading it. ")
     parser.add_argument("--blocksize", type=int, help="Block size for image (for compression)", choices=[8,16])
     parser.add_argument("--qualityfactor", type=int, help="Quality Factor (generally 30,40, 50)")
-    parser.add_argument("--compressionmethod", help="Compression Method", choices=["gzip", "zlib", "bzip"])
+    parser.add_argument("--compressionmethod", help="Compression Method", choices=["gzip", "zlib", "bzip", "xz"])
 
     args = parser.parse_args()
 
@@ -810,7 +824,7 @@ def main():
             qf = int(input("Please type the quality factor (30, 40, or 50): "))
 
         comp_file = input("Type the name for the compressed file: ")
-        cm = input("Type the compression method [bzip/gzip/zlib]: ")
+        cm = input("Type the compression method [bzip/gzip/zlib/xz]: ")
         vb = input("Would you like your program to report what it's doing? [Y/N]: ").lower() == "y"
     else:
         # If not interactive, just get the arguments from the command line
