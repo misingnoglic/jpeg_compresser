@@ -136,7 +136,7 @@ Some things I wish I did better:
 
 # Example run:
 
-``>python jpeg_compressor.py --action both --verbose --originalfile Kodak12.bmp --compressedfile file.gz --blocksize 8 --qualityfactor 50 --compressionmethod gzip
+'>python jpeg_compressor.py --action both --verbose --originalfile Kodak12.bmp --compressedfile file.gz --blocksize 8 --qualityfactor 50 --compressionmethod gzip
 
 Starting program with these arguments:
 
