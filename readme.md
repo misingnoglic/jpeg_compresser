@@ -120,7 +120,7 @@ To view the compressed image:
 
 8. Display the image as a matrix
 
-    5. If the image is a color image, it needs to be saturated (anything less than 0 = 0, anything greater than 255 = 255), and then turn it into an uint8 matrix
+    1. If the image is a color image, it needs to be saturated (anything less than 0 = 0, anything greater than 255 = 255), and then turn it into an uint8 matrix
 
 9. Display statistics (how long it took).
 
