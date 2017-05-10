@@ -456,7 +456,8 @@ def compress_bw(input_filename, output_filename, block_size, quality_factor, com
     """
 
     start_time = time.time()
-    im = np.float32(Image.open(input_filename))
+    im_file = Image.open(input_filename)
+    im = np.float32(im_file)
     if verbose:
         print(f"Opened file {input_filename} for compression")
 
