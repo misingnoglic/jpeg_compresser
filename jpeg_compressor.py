@@ -130,7 +130,9 @@ def gen_quant_matrix(size: int = 8, Q=50):
     else:
         s = 200 - 2 * Q
 
-    return np.int32((s * m + 50) / 100)
+    output = np.int32((s * m + 50) / 100)
+    output(output == 0) = 1
+    return output
 
 
 def zigzag(m: np.int32, odd=True, exclude_dc=False):
